@@ -1,56 +1,50 @@
 # Real-Time Network Intrusion Detection System (NIDS)
 
-Also known as **NIDS v2** - A Lightweight Network Intrusion Detection System
+**Also known as NIDS v2** - A lightweight, CPU-efficient machine learning-based network intrusion detection system with Flask dashboard, live/demo traffic monitoring, and automated threat response.
 
 ## Overview
-A machine learning-based real-time intrusion detection system designed to monitor network traffic, detect malicious activities, and respond with automated alerts and IP blocking. This system provides comprehensive security dashboards for network administrators to visualize and analyze attack patterns. Built with CPU-efficient models, a Flask web dashboard, and pre-trained artifacts for quick demo setup.
+
+NIDS is a production-ready educational IDS that monitors network traffic in real-time, detects malicious activities using trained ML models, and responds with automated alerts and IP blocking. Built with Flask dashboard, three ML models (RF, LightGBM, LR), and pre-trained artifacts for quick deployment.
 
 ## Key Features
 
-### Real-Time Detection
-- Continuous network packet analysis using machine learning models
-- Multi-class attack detection (DoS, Brute Force, Port Scanning, Web Attacks, etc.)
-- Real-time threat scoring and classification
-
-### Alert Management
-- Detailed logging of detected intrusions with timestamps and threat levels
-- Source/Destination IP tracking for correlation analysis
-- Confidence scores for detection accuracy assessment
-- Alert export functionality (CSV format)
-
-### IP Blocking
-- Automatic blocking of suspicious IP addresses
-- Mock endpoint for firewall rule integration
-- Extensible for real firewall integration
-- Block list management and visualization
-
-### Security Dashboard
-- Interactive web-based visualization of attack trends and statistics
-- Live event stream monitoring with real-time updates
-- Attack type distribution and time-series analysis
-- Model performance metrics and detection accuracy tracking
+### Real-Time Detection & Response
+- **Live packet capture** with PyShark (+ demo mode for testing)
+- **Multi-class attack detection**: DoS, Brute Force, Port Scanning, Web Attacks, Botnet, Infiltration
+- **Automated alerts** with timestamps, threat levels, and confidence scores
+- **IP blocking** endpoint (mock + extensible for real firewall integration)
 
 ### Machine Learning
-- **Train & Compare Models**: Random Forest, LightGBM, and Logistic Regression
-- **Preprocessing Artifacts**: Automatic saving of scaler and label encoder
-- **Best Model Selection**: Automatic identification and saving of top-performing model
-- **Visual Evaluation**: Confusion matrices, feature correlation, model comparison charts
+- **3 models**: Random Forest (~95% acc), LightGBM (~93%), Logistic Regression (~85%)
+- **Training pipeline**: `train.py` evaluates and saves best model
+- **Preprocessing artifacts**: Scaler & label encoder for consistent inference
 
-## Repository Structure
+### Web Dashboard
+- **Flask UI** at `http://127.0.0.1:5000/` (demo mode by default)
+- **Live event stream** with Server-Sent Events (SSE)
+- **REST API endpoints** for alerts, reports, IP blocking, mode toggle
+- **Alert export** (CSV format), mock LLM report generation
+
+### Dataset
+- **CICIDS2017 sample**: ~56,661 network flows, 78 features
+- **Attack types**: BENIGN, DoS, Brute Force, Port Scan, Web Attack, Infiltration
+- **Included**: `data/CICIDS2017_sample.csv` for training/testing
+
+## Project Structure
 
 ```
 real-time-nids/
-├── app.py                       # Flask dashboard + REST endpoints + mock LLM report
-├── capture.py                   # Live capture (pyshark) + demo traffic generator
-├── train.py                     # Train, evaluate, compare models; save best
-├── requirements.txt             # Python dependencies
+├── app.py                     # Flask dashboard + REST API
+├── capture.py                 # Live capture (PyShark) + demo mode
+├── train.py                   # Train/evaluate models; save best
+├── requirements.txt           # Python dependencies
 ├── data/
-│   └── CICIDS2017_sample.csv   # Sample flows (56k rows, 78 features)
+│   └── CICIDS2017_sample.csv  # Training dataset
 ├── models/
-│   ├── rf_final.pkl            # Trained Random Forest model
-│   ├── scaler.pkl              # Feature scaler for preprocessing
-│   └── label_encoder.pkl       # Label encoder for attack classes
-├── results/                     # Generated evaluation plots
+│   ├── rf_final.pkl           # Best model (Random Forest)
+│   ├── scaler.pkl             # Feature normalization
+│   └── label_encoder.pkl      # Class label mapping
+├── results/                   # Generated plots
 │   ├── feature_correlation.png
 │   ├── RandomForest_confusion.png
 │   ├── LightGBM_confusion.png
@@ -59,218 +53,165 @@ real-time-nids/
 └── README.md
 ```
 
-## Dataset Information
+## Quick Start (5 minutes)
 
-**Source**: CICIDS2017 sample dataset
-- **Total Flows**: ~56,661 network flows
-- **Features**: 78 flow-based numeric features
-  - Flow Duration, Total Fwd/Bwd Packets, Flow Bytes/sec, Flow IAT Mean/Max/Min, etc.
-- **Attack Types**: 
-  - BENIGN (normal traffic)
-  - DoS (Denial of Service attacks)
-  - Brute Force (SSH/FTP brute force attempts)
-  - Port Scanning (nmap, network reconnaissance)
-  - Web Attack (SQL injection, XSS, etc.)
-  - Infiltration (slow network infiltration)
-  - Botnet traffic
-  - And other malicious traffic patterns
-
-## Quick Start - Run Demo (No Capture Hardware Required)
-
-### 1. Setup Environment
-
+### Setup
 ```bash
-# Clone or navigate to project directory
 cd real-time-nids
-
-# Create virtual environment
 python -m venv .venv
+source .venv/bin/activate          # macOS/Linux
+.\venv\Scripts\activate            # Windows
 
-# Activate virtual environment
-source .venv/bin/activate          # macOS / Linux
-.\venv\Scripts\activate            # Windows PowerShell
-
-# Upgrade pip and install core dependencies
-pip install --upgrade pip
-pip install flask scikit-learn lightgbm joblib pandas numpy matplotlib seaborn
-
-# Optional: Install for live packet capture (requires tshark on system)
-pip install pyshark
+pip install -r requirements.txt
+# Optional: pip install pyshark (for live capture)
 ```
 
-### 2. Run the Flask Dashboard
-
+### Run Dashboard (Demo Mode)
 ```bash
 python app.py
+# Open http://127.0.0.1:5000/ in browser
 ```
 
-Open your browser at **[http://127.0.0.1:5000/](http://127.0.0.1:5000/)**
+**Demo mode starts automatically** if PyShark unavailable. Use dashboard to:
+- View live/demo attack events
+- Monitor alert logs
+- Toggle capture mode
+- Export alerts (CSV)
+- Generate analytical reports
 
-- Demo mode activates automatically if pyshark isn't available
-- Use the dashboard controls to:
-  - View live/demo traffic events
-  - Monitor alert logs and threats
-  - Toggle capture mode (demo/live)
-  - Export alerts to CSV
-  - Generate analytical reports
-
-## Train New Models from Scratch
-
+### Train Models from Scratch
 ```bash
-# Run training pipeline
 python train.py
 ```
 
-**train.py** workflow:
-1. Load `data/CICIDS2017_sample.csv`
-2. Preprocess and normalize features
-3. Train three models in parallel:
-   - Random Forest classifier
-   - LightGBM gradient boosting
-   - Logistic Regression (baseline)
-4. Evaluate on test set with cross-validation
-5. Generate confusion matrix plots for each model in `/results/`
-6. Save best-performing model as `models/rf_final.pkl`
-7. Save preprocessing artifacts:
-   - `models/scaler.pkl` - StandardScaler for feature normalization
-   - `models/label_encoder.pkl` - Label encoding for attack classes
+Produces:
+- Confusion matrix plots for each model in `/results/`
+- Best model saved as `models/rf_final.pkl`
+- Preprocessing artifacts: `scaler.pkl`, `label_encoder.pkl`
 
-## Flask REST API Endpoints
+## REST API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Main dashboard UI (HTML) |
-| `/alerts` | GET | View current alerts (JSON or HTML) |
-| `/alerts/export` | GET | Download alerts as CSV file |
-| `/report` | GET | Generate mock NIDS analytical report |
-| `/live_data_stream` | GET | Server-Sent Events stream for real-time logs |
-| `/control/toggle_mode` | POST | Switch between demo and live capture |
-| `/control/<action>` | POST | Generic control actions (start/stop capture) |
-| `/block_ip/<ip_address>` | POST | Mock IP blocking endpoint |
+| Endpoint | Method | Purpose |
+|----------|--------|----------|
+| `/` | GET | Dashboard UI |
+| `/alerts` | GET | View alerts (JSON/HTML) |
+| `/alerts/export` | GET | Download alerts (CSV) |
+| `/report` | GET | Generate NIDS report |
+| `/live_data_stream` | GET | Real-time log stream (SSE) |
+| `/control/toggle_mode` | POST | Toggle demo↔live |
+| `/block_ip/<ip>` | POST | Block/mock-block IP |
 
-Refer to `app.py` source code for detailed endpoint behavior and response formats.
+See `app.py` for detailed payloads and responses.
 
-## Model Performance
+## Model Performance (CICIDS2017 Sample)
 
-Evaluation results on CICIDS2017 sample:
+| Model | Accuracy | Precision | Recall | F1 |
+|-------|----------|-----------|--------|----|
+| Random Forest | 95% | 94% | 95% | 94% |
+| LightGBM | 93% | 92% | 93% | 92% |
+| Logistic Regression | 85% | 84% | 85% | 84% |
 
-| Model | Accuracy | Precision | Recall | F1-Score |
-|-------|----------|-----------|--------|----------|
-| Random Forest | ~95% | ~94% | ~95% | ~94% |
-| LightGBM | ~93% | ~92% | ~93% | ~92% |
-| Logistic Regression | ~85% | ~84% | ~85% | ~84% |
+## Technical Stack
 
-**Generated Artifacts**:
-- Individual confusion matrices for each model
-- Feature importance and correlation heatmap
-- Cross-model performance comparison chart
+- **Python 3.7+**, scikit-learn, LightGBM, Flask
+- **Pandas/NumPy** for data processing
+- **Matplotlib/Seaborn** for visualization
+- **PyShark** for packet capture (optional)
+- **Joblib** for model serialization
 
-## Important Notes & Caveats
+## Important Notes
 
 ### PyShark & Tshark
-- Real packet capture requires `tshark` installed system-wide
-- `pyshark` Python package acts as interface to tshark
-- Demo mode uses synthetic traffic generator when these are unavailable
-- Perfect for testing without network hardware setup
+- Live capture requires `tshark` installed + `pyshark` pip package
+- Demo mode works without any dependencies (best for testing)
+- Falls back to synthetic traffic if unavailable
 
-### System Permissions
-- Live packet capture may require root/Administrator privileges
-- OS-specific and network configuration dependent
-- Windows: May need "Run as Administrator" for certain network interfaces
-- Linux/macOS: May need `sudo` or group permissions for interface access
+### Permissions
+- Live capture may need **root/Administrator** privileges
+- Windows: Run as Admin for certain network interfaces
+- Linux/macOS: May need `sudo` or group permissions
 
-### Model Portability
-- Pre-trained `rf_final.pkl` serialized with joblib
-- **Critical**: Must have matching `scaler.pkl` and `label_encoder.pkl` for inference
-- Feature order and preprocessing must be consistent with training pipeline
-- Retraining recommended if data distribution changes significantly
+### Model Artifacts
+- **Must keep together**: `rf_final.pkl`, `scaler.pkl`, `label_encoder.pkl`
+- Feature order & preprocessing must match training pipeline
+- Retrain if data distribution changes significantly
 
-### Security & Deployment
-- **Educational/Demo Project**: Not hardened for production
-- Flask app uses development server - never expose to untrusted networks
-- No authentication/authorization implemented
-- IP blocking is currently mocked - real firewall integration requires careful setup
-- Recommendations for production:
-  - Add Flask authentication (OAuth2, JWT, etc.)
-  - Deploy behind reverse proxy (nginx, Apache)
-  - Use HTTPS with proper certificates
-  - Implement role-based access control
-  - Add comprehensive logging and monitoring
-  - Integrate with actual firewall/IDS systems
+### Security & Production Use
+- **Educational demo** - not hardened for production
+- **Never expose** Flask dev server to untrusted networks
+- **No auth** implemented - add OAuth2/JWT before deployment
+- IP blocking is **mocked** - integrate real firewall carefully
 
-## How to Extend This Project
+**Production checklist**:
+- [ ] Add authentication (OAuth2/JWT)
+- [ ] Deploy behind reverse proxy (nginx/Apache)
+- [ ] Use HTTPS with valid certificates
+- [ ] Add role-based access control
+- [ ] Integrate with actual firewall/IDS
+- [ ] Set up comprehensive logging & monitoring
+
+## How to Extend
 
 ### Machine Learning
-1. **Add More Models**: XGBoost, CatBoost, Neural Networks (TensorFlow/PyTorch)
-2. **Feature Engineering**: Temporal features, session-based features, protocol analysis
-3. **Deep Learning**: LSTM for sequence detection, 1D CNN for flow analysis
-4. **Ensemble Methods**: Voting classifiers, stacking, boosting variations
+1. Add XGBoost, CatBoost, Neural Networks (TensorFlow/PyTorch)
+2. Feature engineering: temporal, session-based, protocol analysis
+3. Deep learning: LSTM for sequences, 1D CNN for flows
+4. Ensemble methods: voting, stacking, boosting variants
 
-### Data & Detection
-1. **Real-time Feature Extraction**: Align with training pipeline for production accuracy
-2. **Anomaly Detection**: Isolation Forest, One-class SVM for zero-day detection
-3. **Incremental Learning**: Online learning for drift adaptation
-4. **Threat Intelligence**: Integrate with external IP reputation feeds
+### Detection & Integration
+1. Anomaly detection: Isolation Forest, One-class SVM (zero-day)
+2. Threat intelligence: IP reputation feeds, external APIs
+3. SIEM integration: Forward logs to ELK, Splunk, etc.
+4. Real IP blocking: iptables, Windows Firewall, cloud APIs
+5. Metrics export: Prometheus for monitoring
 
 ### Dashboard & Operations
-1. **Add Authentication**: User login, API keys, OAuth2 integration
-2. **Advanced Visualizations**: Attack timeline, geographic maps, flow diagrams
-3. **Export Formats**: JSON, XML, SIEM-compatible formats
-4. **Alerting**: Email/Slack notifications for critical threats
+1. Add user authentication & role-based access
+2. Advanced visualizations: attack timelines, geographic maps
+3. Email/Slack notifications for critical threats
+4. Export formats: JSON, XML, SIEM-compatible
+5. CI/CD: GitHub Actions for testing & validation
 
-### Integration
-1. **Real IP Blocking**: Firewall rules (iptables, Windows Firewall), cloud provider APIs
-2. **SIEM Integration**: Forward logs to ELK, Splunk, or similar
-3. **Metrics Export**: Prometheus metrics for monitoring
-4. **CI/CD Pipeline**: GitHub Actions for testing, linting, model validation
+## Requirements
 
-### Quality Assurance
-1. **Unit Tests**: Test preprocessing, model loading, prediction logic
-2. **Integration Tests**: Flask endpoints, data pipeline
-3. **Performance Tests**: Latency benchmarks, throughput testing
-4. **Security Tests**: Input validation, SQL injection prevention
+Core:
+```
+flask==2.3.2
+scikit-learn==1.3.0
+lightgbm==4.0.0
+joblib==1.3.1
+pandas==2.0.3
+numpy==1.24.3
+matplotlib==3.7.2
+seaborn==0.12.2
+```
 
-## Technologies Stack
-
-- **Python 3.7+**: Core programming language
-- **scikit-learn**: Machine learning models and metrics
-- **LightGBM**: Gradient boosting implementation
-- **Flask**: Web framework and REST API
-- **Pandas**: Data manipulation and analysis
-- **NumPy**: Numerical computing
-- **Matplotlib & Seaborn**: Data visualization
-- **PyShark**: Network packet capture interface
-- **Joblib**: Model serialization and deserialization
-
-## License
-
-This project is offered for educational purposes. Licensed under MIT License.
+Optional (live capture):
+```
+pyshark==0.6  # Requires tshark installed system-wide
+```
 
 ## Contributing
 
-Contributions are welcome! Please follow this workflow:
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add feature'`
+4. Push: `git push origin feature/amazing-feature`
+5. Submit PR with description, tests, screenshots
 
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** changes with clear messages (`git commit -m 'Add amazing feature'`)
-4. **Push** to your branch (`git push origin feature/amazing-feature`)
-5. **Submit** a Pull Request with:
-   - Description of changes
-   - Test coverage for new functionality
-   - Screenshots/GIFs if UI changes
+## License
+
+MIT License - Educational/Research purposes
 
 ## Author & Contact
 
 **Sagar Rawada**
 - GitHub: [@SagarRawada9](https://github.com/SagarRawada9)
 - Email: [Add your professional email]
-- LinkedIn: [Add your LinkedIn profile]
+- LinkedIn: [Add your LinkedIn]
 
-Questions, suggestions, or collaboration inquiries? Feel free to open an issue or contact me directly.
+Questions, suggestions, or collaboration? Open an issue or contact directly.
 
 ---
 
-**Project Status**: Active Development  
-**Last Updated**: December 2025  
-**Version**: 2.0 (NIDS v2)  
-**Maintenance**: Ongoing
+**Status**: Active Development | **Version**: 2.0 | **Last Updated**: December 2025
