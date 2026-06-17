@@ -207,8 +207,8 @@ MIT License - Educational/Research purposes
 
 **Sagar Rawada**
 - GitHub: [@SagarRawada9](https://github.com/SagarRawada9)
-- Email: [Add your professional email]
-- LinkedIn: [Add your LinkedIn]
+- Email: sagarrawada9@gmail.com
+- LinkedIn: 
 
 Questions, suggestions, or collaboration? Open an issue or contact directly.
 
